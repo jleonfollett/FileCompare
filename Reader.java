@@ -10,8 +10,9 @@ import java.util.ArrayList;
 public class Reader {
 	private BufferedReader br;
 	private FileReader fr;
-	private ArrayList<String> currentFile = new ArrayList<String>();
-	private ArrayList<ArrayList<String>> lists = new ArrayList<ArrayList<String>>();
+	private ArrayList<String> listOfFileNames = new ArrayList<String>();
+	private ArrayList<ArrayList<String>> listOfFiles = new ArrayList<ArrayList<String>>();
+	private ArrayList<ArrayList<String>> matchedFileNames = new ArrayList<ArrayList<String>>();
 	
 
 	public Reader() throws IOException, ParseException{
@@ -20,6 +21,7 @@ public class Reader {
 		  File[] directoryListing = dir.listFiles();
 		  if (directoryListing != null) {
 		    for (File child : directoryListing) {
+		    	listOfFileNames.add(child.getName());
 		    	fr = new FileReader(child);
 		    	br = new BufferedReader(fr);
 		       	ReadLines(br);
@@ -30,21 +32,45 @@ public class Reader {
 		    // to avoid race conditions with another process that deletes
 		    // directories.
 		  }
-		boolean equal = CheckLines(lists.get(0), lists.get(1));
+		CompareArrayListValues(listOfFiles);
+		System.out.println(matchedFileNames);
+		}
+	
+	private void CompareArrayListValues(ArrayList<ArrayList<String>> listOfFiles){
+		for(int x = 0; x <= (listOfFiles.size() - 1) && listOfFiles.size() > 0; x = 0){
+			ArrayList<String> matchedFiles = new ArrayList<String>();
+			matchedFiles.add(listOfFileNames.get(x));
+			if(x != listOfFiles.size()){
+			for(int y = x + 1; y < listOfFiles.size() && listOfFiles.size() > 0; y++){ //Easier way?
+				boolean equal = CheckLines(listOfFiles.get(x), listOfFiles.get(y));
+				if(equal){
+					matchedFiles.add(listOfFileNames.get(y));
+					listOfFiles.remove(y);
+					listOfFileNames.remove(y);
+					y=x;
+				}
+			}
+			}
+			listOfFiles.remove(x);
+			listOfFileNames.remove(x);
+			matchedFileNames.add(matchedFiles);
+		}
+	}
+	
+	private void PrintOutput(boolean equal, ArrayList<String> file1Contents, ArrayList<String> file2Contents){
 		if(equal){
 			System.out.println("The files are the same! :)");
 		} else {
-			if(lists.get(0).size() == lists.get(1).size()){
+			if(file1Contents.size() == file2Contents.size()){
 				System.out.println("The files have different characters");
 			} else {
 				System.out.println("The files have different lines");
 			}
 		}
 	}
-	
 	private void ReadLines(BufferedReader file1) throws IOException{
 		// Reads lines from files and add them to Line Lists
-		currentFile = new ArrayList<String>();
+		ArrayList<String >currentFile = new ArrayList<String>();
 		String line;
 		while((line = file1.readLine()) != null){
 			currentFile.add(line);
@@ -52,7 +78,7 @@ public class Reader {
 		for(String lines: currentFile){
 			System.out.println(lines);
 		}
-		lists.add(currentFile);
+		listOfFiles.add(currentFile);
 		
 		
 	}
